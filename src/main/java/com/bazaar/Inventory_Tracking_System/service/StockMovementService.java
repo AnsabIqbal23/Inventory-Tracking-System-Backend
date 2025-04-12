@@ -1,8 +1,8 @@
 package com.bazaar.Inventory_Tracking_System.service;
 
 import com.bazaar.Inventory_Tracking_System.entity.StockMovement;
+import com.bazaar.Inventory_Tracking_System.exception.ResourceNotFoundException;
 import com.bazaar.Inventory_Tracking_System.repository.StockMovementRepository;
-import org.apache.kafka.common.errors.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +16,15 @@ public class StockMovementService {
 
     public List<StockMovement> getAllStockMovements() {
         return stockMovementRepository.findAll();
+    }
+
+    public StockMovement getStockMovementById(Long id) {
+        return stockMovementRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Stock Movement not found with id " + id));
+    }
+
+    public List<StockMovement> getStockMovementsByProductId(Long productId) {
+        return stockMovementRepository.findByProductId(productId);
     }
 
     public StockMovement createStockMovement(StockMovement stockMovement) {

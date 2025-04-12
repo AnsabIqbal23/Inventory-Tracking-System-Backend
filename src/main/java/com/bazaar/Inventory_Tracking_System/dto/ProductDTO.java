@@ -1,11 +1,38 @@
 package com.bazaar.Inventory_Tracking_System.dto;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
+
 public class ProductDTO {
+    private Long id;
+
+    @NotBlank(message = "Product name is required")
     private String name;
+
+    @NotBlank(message = "Description is required")
     private String description;
-    private double price;
-    private int quantity;
+
+    @NotNull(message = "Price is required")
+    @Positive(message = "Price must be positive")
+    private Double price;
+
+    @NotNull(message = "Quantity is required")
+    @PositiveOrZero(message = "Quantity must be zero or positive")
+    private Integer quantity;
+
+    @NotNull(message = "Store ID is required")
     private Long storeId;
+
+    // Getters and setters
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
 
     public String getName() {
         return name;
@@ -23,19 +50,19 @@ public class ProductDTO {
         this.description = description;
     }
 
-    public double getPrice() {
+    public Double getPrice() {
         return price;
     }
 
-    public void setPrice(double price) {
+    public void setPrice(Double price) {
         this.price = price;
     }
 
-    public int getQuantity() {
+    public Integer getQuantity() {
         return quantity;
     }
 
-    public void setQuantity(int quantity) {
+    public void setQuantity(Integer quantity) {
         this.quantity = quantity;
     }
 
@@ -47,4 +74,3 @@ public class ProductDTO {
         this.storeId = storeId;
     }
 }
-

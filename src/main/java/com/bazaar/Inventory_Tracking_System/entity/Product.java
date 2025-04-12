@@ -25,8 +25,6 @@ public class Product {
 
     private LocalDateTime updatedAt;
 
-    private LocalDateTime quantityUpdatedAt;
-
     @ManyToOne
     @JoinColumn(name = "store_id", nullable = false)
     private Store store;
@@ -88,13 +86,4 @@ public class Product {
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
     }
-
-    public LocalDateTime getQuantityUpdatedAt() {
-        return quantityUpdatedAt;
-    }
-
-    public void setQuantityUpdatedAt(LocalDateTime quantityUpdatedAt) {
-        this.quantityUpdatedAt = quantityUpdatedAt;
-    }
 }
-

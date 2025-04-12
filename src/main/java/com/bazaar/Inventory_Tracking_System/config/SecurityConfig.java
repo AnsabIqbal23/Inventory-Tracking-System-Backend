@@ -79,6 +79,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -89,6 +90,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
     @Autowired
@@ -126,11 +128,10 @@ public class SecurityConfig {
                 )
                 .addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(authz -> authz
-                        .requestMatchers("/api/products/**").hasAnyRole("USER", "ADMIN")
-                        .requestMatchers("/api/stores/**").hasAnyRole("USER", "ADMIN")
-                        .requestMatchers("/api/stock-movements/**").hasAnyRole("USER", "ADMIN")
-                        .requestMatchers("/api/users/**").hasAnyRole("USER", "ADMIN")
-                        .anyRequest().authenticated()
+                        .requestMatchers("/api/products/**").authenticated()
+                        .requestMatchers("/api/stores/**").authenticated()
+                        .requestMatchers("/api/stock-movements/**").authenticated()
+                        .requestMatchers("/api/users/**").authenticated()
                 )
                 .authenticationProvider(daoAuthenticationProvider())
                 .build();
