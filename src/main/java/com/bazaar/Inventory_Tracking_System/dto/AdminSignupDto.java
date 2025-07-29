@@ -1,66 +1,46 @@
-package com.bazaar.Inventory_Tracking_System.entity;
+package com.bazaar.Inventory_Tracking_System.dto;
 
-import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 
-import java.util.HashSet;
-import java.util.Set;
-
-@Entity
-@Table(name = "users")
-public class User {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @Column(nullable = false, unique = true)
+public class AdminSignupDto {
+    @NotBlank(message = "Username is required")
     private String username;
 
-    @Column(nullable = false, unique = true)
+    @NotBlank(message = "Email is required")
+    @Email(message = "Email should be valid")
     private String email;
 
-    @Column(nullable = false)
+    @NotBlank(message = "Password is required")
     private String password;
 
-    @Column(nullable = true)
     private String phone;
 
-    @Column(nullable = true)
     private String location;
 
-    @Column(nullable = true)
     private String city;
 
-    @Column(nullable = true)
     private String state;
 
-    @Column(nullable = true)
     private String country;
 
-    @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
-    @Enumerated(EnumType.STRING)
-    private Set<Role> roles;
-
     // Constructors
-    public User() {
+    public AdminSignupDto() {
     }
 
-    public User(String username, String email, String password, Set<Role> roles) {
+    public AdminSignupDto(String username, String email, String password, String phone,
+                          String location, String city, String state, String country) {
         this.username = username;
         this.email = email;
         this.password = password;
-        this.roles = roles;
+        this.phone = phone;
+        this.location = location;
+        this.city = city;
+        this.state = state;
+        this.country = country;
     }
 
     // Getters and setters
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
     public String getUsername() {
         return username;
     }
@@ -123,13 +103,5 @@ public class User {
 
     public void setCountry(String country) {
         this.country = country;
-    }
-
-    public Set<Role> getRoles() {
-        return roles;
-    }
-
-    public void setRoles(Set<Role> roles) {
-        this.roles = roles;
     }
 }

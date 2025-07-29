@@ -1,9 +1,6 @@
 package com.bazaar.Inventory_Tracking_System.controller;
 
-import com.bazaar.Inventory_Tracking_System.dto.UserDto;
-import com.bazaar.Inventory_Tracking_System.dto.UserRegistrationDto;
-import com.bazaar.Inventory_Tracking_System.dto.PasswordUpdateDto;
-import com.bazaar.Inventory_Tracking_System.entity.Role;
+import com.bazaar.Inventory_Tracking_System.dto.*;
 import com.bazaar.Inventory_Tracking_System.entity.User;
 import com.bazaar.Inventory_Tracking_System.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,44 +22,74 @@ public class UserController {
     @Autowired
     private UserService userService;
 
-    // User registration (creates a user with only ROLE_USER role)
+    @PostMapping("/login")
+    public ResponseEntity<?> userLogin(@Valid @RequestBody LoginDTO loginDto) {
+        try {
+            LoginResponseDto response = userService.login(loginDto);
+
+            if (response.isSuccess()) {
+                return ResponseEntity.ok(response);
+            } else {
+                return ResponseEntity.badRequest().body(response);
+            }
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(
+                    new LoginResponseDto("Login failed: " + e.getMessage(), false)
+            );
+        }
+    }
+
+    @PostMapping("/admin/login")
+    public ResponseEntity<?> adminLogin(@Valid @RequestBody LoginDTO loginDto) {
+        try {
+            LoginResponseDto response = userService.login(loginDto);
+
+            if (response.isSuccess()) {
+                // Check if user has admin role
+                if (response.getRoles().contains("ROLE_ADMIN")) {
+                    return ResponseEntity.ok(response);
+                } else {
+                    return ResponseEntity.badRequest().body(
+                            new LoginResponseDto("Access denied. Admin role required.", false)
+                    );
+                }
+            } else {
+                return ResponseEntity.badRequest().body(response);
+            }
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(
+                    new LoginResponseDto("Admin login failed: " + e.getMessage(), false)
+            );
+        }
+    }
+
+    // =================== SIGNUP ENDPOINTS (NO AUTH REQUIRED) ===================
+
+    // User registration (no auth required)
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@Valid @RequestBody UserRegistrationDto userRegistrationDto) {
-        // Check if user already exists
-        if (userService.findByUsername(userRegistrationDto.getUsername()).isPresent()) {
-            return ResponseEntity.badRequest().body("User already exists");
+        try {
+            String message = userService.createUser(userRegistrationDto);
+            return ResponseEntity.status(201).body(Map.of("message", message, "success", true));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage(), "success", false));
         }
-
-        // Set ROLE_USER role by default
-        Set<Role> roles = new HashSet<>();
-        roles.add(Role.ROLE_USER);
-
-        // Create new user
-        userService.createUser(userRegistrationDto.getUsername(), userRegistrationDto.getPassword(), roles);
-
-        return ResponseEntity.status(201).body("User registered successfully");
     }
 
-    // Admin registration (requires ROLE_ADMIN role to create another admin)
-    @PostMapping("/register/admin")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> registerAdmin(@Valid @RequestBody UserRegistrationDto userRegistrationDto) {
-        // Check if user already exists
-        if (userService.findByUsername(userRegistrationDto.getUsername()).isPresent()) {
-            return ResponseEntity.badRequest().body("User already exists");
+    // Admin registration with extended fields (no auth required)
+    @PostMapping("/admin/register")
+    public ResponseEntity<?> registerAdmin(@Valid @RequestBody AdminSignupDto adminSignupDto) {
+        try {
+            String message = userService.createAdmin(adminSignupDto);
+            return ResponseEntity.status(201).body(Map.of("message", message, "success", true));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage(), "success", false));
         }
-
-        // Set ROLE_ADMIN role
-        Set<Role> roles = new HashSet<>();
-        roles.add(Role.ROLE_ADMIN);
-
-        // Create new admin
-        userService.createUser(userRegistrationDto.getUsername(), userRegistrationDto.getPassword(), roles);
-
-        return ResponseEntity.status(201).body("Admin registered successfully");
     }
 
-    // Get All Users (without password)
+    // =================== AUTHENTICATED ENDPOINTS ===================
+
+    // Get All Users (admin only)
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     public List<UserDto> getAllUsers() {
@@ -72,7 +99,7 @@ public class UserController {
                 .collect(Collectors.toList());
     }
 
-    // Get User By ID (without password)
+    // Get User By ID (admin only)
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> getUserById(@PathVariable Long id) {
@@ -81,7 +108,7 @@ public class UserController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    // Delete User
+    // Delete User (admin only)
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> deleteUser(@PathVariable Long id) {
@@ -91,11 +118,12 @@ public class UserController {
         }
 
         userService.deleteUser(id);
-        return ResponseEntity.ok("User deleted successfully");
+        return ResponseEntity.ok(Map.of("message", "User deleted successfully"));
     }
 
-    // Current user update their own password - updated URL without an ID parameter
+    // Current user update their own password
     @PutMapping("/password")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<?> updatePassword(@Valid @RequestBody PasswordUpdateDto passwordUpdateDto) {
         try {
             // Get the current authenticated user
@@ -108,11 +136,11 @@ public class UserController {
                     passwordUpdateDto.getNewPassword()
             );
 
-            return ResponseEntity.ok("Password updated successfully");
+            return ResponseEntity.ok(Map.of("message", "Password updated successfully"));
         } catch (BadCredentialsException e) {
-            return ResponseEntity.badRequest().body("Current password is incorrect");
+            return ResponseEntity.badRequest().body(Map.of("message", "Current password is incorrect"));
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
     }
 
@@ -125,7 +153,7 @@ public class UserController {
 
         String newPassword = payload.get("password");
         if (newPassword == null || newPassword.isEmpty()) {
-            return ResponseEntity.badRequest().body("New password is required");
+            return ResponseEntity.badRequest().body(Map.of("message", "New password is required"));
         }
 
         try {
@@ -136,9 +164,9 @@ public class UserController {
             }
 
             userService.adminUpdateUserPassword(userOptional.get().getId(), newPassword);
-            return ResponseEntity.ok("User password updated successfully");
+            return ResponseEntity.ok(Map.of("message", "User password updated successfully"));
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
     }
 
@@ -147,6 +175,12 @@ public class UserController {
         UserDto dto = new UserDto();
         dto.setId(user.getId());
         dto.setUsername(user.getUsername());
+        dto.setEmail(user.getEmail());
+        dto.setPhone(user.getPhone());
+        dto.setLocation(user.getLocation());
+        dto.setCity(user.getCity());
+        dto.setState(user.getState());
+        dto.setCountry(user.getCountry());
 
         // Convert Role enum set to String set
         Set<String> roleNames = user.getRoles().stream()

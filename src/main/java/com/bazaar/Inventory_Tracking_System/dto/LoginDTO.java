@@ -1,26 +1,20 @@
 package com.bazaar.Inventory_Tracking_System.dto;
 
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
-public class UserRegistrationDto {
+public class LoginDTO {
     @NotBlank(message = "Username is required")
     private String username;
-
-    @NotBlank(message = "Email is required")
-    @Email(message = "Email should be valid")
-    private String email;
 
     @NotBlank(message = "Password is required")
     private String password;
 
     // Constructors
-    public UserRegistrationDto() {
+    public LoginDTO() {
     }
 
-    public UserRegistrationDto(String username, String email, String password) {
+    public LoginDTO(String username, String password) {
         this.username = username;
-        this.email = email;
         this.password = password;
     }
 
@@ -31,14 +25,6 @@ public class UserRegistrationDto {
 
     public void setUsername(String username) {
         this.username = username;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
     }
 
     public String getPassword() {

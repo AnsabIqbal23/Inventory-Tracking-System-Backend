@@ -1,5 +1,9 @@
 package com.bazaar.Inventory_Tracking_System.service;
 
+import com.bazaar.Inventory_Tracking_System.dto.AdminSignupDto;
+import com.bazaar.Inventory_Tracking_System.dto.LoginDTO;
+import com.bazaar.Inventory_Tracking_System.dto.LoginResponseDto;
+import com.bazaar.Inventory_Tracking_System.dto.UserRegistrationDto;
 import com.bazaar.Inventory_Tracking_System.entity.User;
 import com.bazaar.Inventory_Tracking_System.entity.Role;
 import com.bazaar.Inventory_Tracking_System.repository.UserRepository;
@@ -11,6 +15,8 @@ import org.springframework.security.authentication.BadCredentialsException;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.HashSet;
+import java.util.stream.Collectors;
 
 @Service
 public class UserService {
@@ -25,10 +31,109 @@ public class UserService {
         return userRepository.findByUsername(username);
     }
 
+    public Optional<User> findByEmail(String email) {
+        return userRepository.findByEmail(email);
+    }
+
+    // Login method
+    public LoginResponseDto login(LoginDTO loginDto) {
+        try {
+            // Find user by username
+            Optional<User> userOptional = userRepository.findByUsername(loginDto.getUsername());
+
+            if (userOptional.isEmpty()) {
+                return new LoginResponseDto("Invalid username or password", false);
+            }
+
+            User user = userOptional.get();
+
+            // Verify password
+            if (!passwordEncoder.matches(loginDto.getPassword(), user.getPassword())) {
+                return new LoginResponseDto("Invalid username or password", false);
+            }
+
+            // Convert roles to string set
+            Set<String> roleNames = user.getRoles().stream()
+                    .map(Enum::name)
+                    .collect(Collectors.toSet());
+
+            // Return successful login response
+            return new LoginResponseDto(
+                    "Login successful",
+                    user.getId(),
+                    user.getUsername(),
+                    user.getEmail(),
+                    roleNames,
+                    true
+            );
+
+        } catch (Exception e) {
+            return new LoginResponseDto("Login failed: " + e.getMessage(), false);
+        }
+    }
+
+    // Regular user registration
+    public String createUser(UserRegistrationDto userRegistrationDto) {
+        // Check if username already exists
+        if (userRepository.existsByUsername(userRegistrationDto.getUsername())) {
+            throw new RuntimeException("Username already exists");
+        }
+
+        // Check if email already exists
+        if (userRepository.existsByEmail(userRegistrationDto.getEmail())) {
+            throw new RuntimeException("Email already exists");
+        }
+
+        User user = new User();
+        user.setUsername(userRegistrationDto.getUsername());
+        user.setEmail(userRegistrationDto.getEmail());
+        user.setPassword(passwordEncoder.encode(userRegistrationDto.getPassword()));
+
+        // Set default role as USER
+        Set<Role> roles = new HashSet<>();
+        roles.add(Role.ROLE_USER);
+        user.setRoles(roles);
+
+        userRepository.save(user);
+        return "User registered successfully";
+    }
+
+    // Admin registration with extended fields
+    public String createAdmin(AdminSignupDto adminSignupDto) {
+        // Check if username already exists
+        if (userRepository.existsByUsername(adminSignupDto.getUsername())) {
+            throw new RuntimeException("Username already exists");
+        }
+
+        // Check if email already exists
+        if (userRepository.existsByEmail(adminSignupDto.getEmail())) {
+            throw new RuntimeException("Email already exists");
+        }
+
+        User user = new User();
+        user.setUsername(adminSignupDto.getUsername());
+        user.setEmail(adminSignupDto.getEmail());
+        user.setPassword(passwordEncoder.encode(adminSignupDto.getPassword()));
+        user.setPhone(adminSignupDto.getPhone());
+        user.setLocation(adminSignupDto.getLocation());
+        user.setCity(adminSignupDto.getCity());
+        user.setState(adminSignupDto.getState());
+        user.setCountry(adminSignupDto.getCountry());
+
+        // Set role as ADMIN
+        Set<Role> roles = new HashSet<>();
+        roles.add(Role.ROLE_ADMIN);
+        user.setRoles(roles);
+
+        userRepository.save(user);
+        return "Admin registered successfully";
+    }
+
+    // Legacy method for backward compatibility
     public void createUser(String username, String password, Set<Role> roles) {
         User user = new User();
         user.setUsername(username);
-        user.setPassword(passwordEncoder.encode(password)); // Hash the password
+        user.setPassword(passwordEncoder.encode(password));
         user.setRoles(roles);
         userRepository.save(user);
     }
@@ -37,7 +142,6 @@ public class UserService {
         return userRepository.findAll();
     }
 
-    // Get user by ID
     public Optional<User> getUserById(Long id) {
         return userRepository.findById(id);
     }
