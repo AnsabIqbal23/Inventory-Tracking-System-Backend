@@ -14,14 +14,18 @@ public class UserRegistrationDto {
     @NotBlank(message = "Password is required")
     private String password;
 
+    @NotBlank(message = "Confirm password is required")
+    private String confirmPassword;
+
     // Constructors
     public UserRegistrationDto() {
     }
 
-    public UserRegistrationDto(String username, String email, String password) {
+    public UserRegistrationDto(String username, String email, String password, String confirmPassword) {
         this.username = username;
         this.email = email;
         this.password = password;
+        this.confirmPassword = confirmPassword;
     }
 
     // Getters and setters
@@ -47,5 +51,18 @@ public class UserRegistrationDto {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getConfirmPassword() {
+        return confirmPassword;
+    }
+
+    public void setConfirmPassword(String confirmPassword) {
+        this.confirmPassword = confirmPassword;
+    }
+
+    // Method to validate password matching
+    public boolean isPasswordMatching() {
+        return password != null && password.equals(confirmPassword);
     }
 }

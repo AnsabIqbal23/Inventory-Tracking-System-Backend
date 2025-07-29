@@ -14,6 +14,9 @@ public class AdminSignupDto {
     @NotBlank(message = "Password is required")
     private String password;
 
+    @NotBlank(message = "Confirm password is required")
+    private String confirmPassword;
+
     private String phone;
 
     private String location;
@@ -28,11 +31,12 @@ public class AdminSignupDto {
     public AdminSignupDto() {
     }
 
-    public AdminSignupDto(String username, String email, String password, String phone,
-                          String location, String city, String state, String country) {
+    public AdminSignupDto(String username, String email, String password, String confirmPassword,
+                          String phone, String location, String city, String state, String country) {
         this.username = username;
         this.email = email;
         this.password = password;
+        this.confirmPassword = confirmPassword;
         this.phone = phone;
         this.location = location;
         this.city = city;
@@ -63,6 +67,14 @@ public class AdminSignupDto {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getConfirmPassword() {
+        return confirmPassword;
+    }
+
+    public void setConfirmPassword(String confirmPassword) {
+        this.confirmPassword = confirmPassword;
     }
 
     public String getPhone() {
@@ -103,5 +115,10 @@ public class AdminSignupDto {
 
     public void setCountry(String country) {
         this.country = country;
+    }
+
+    // Method to validate password matching
+    public boolean isPasswordMatching() {
+        return password != null && password.equals(confirmPassword);
     }
 }

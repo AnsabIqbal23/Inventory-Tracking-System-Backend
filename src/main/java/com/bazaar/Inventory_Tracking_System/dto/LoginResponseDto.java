@@ -9,6 +9,7 @@ public class LoginResponseDto {
     private String email;
     private Set<String> roles;
     private boolean success;
+    private String token;
 
     // Constructors
     public LoginResponseDto() {
@@ -19,13 +20,14 @@ public class LoginResponseDto {
         this.success = success;
     }
 
-    public LoginResponseDto(String message, Long userId, String username, String email, Set<String> roles, boolean success) {
+    public LoginResponseDto(String message, Long userId, String username, String email, Set<String> roles, boolean success, String token) {
         this.message = message;
         this.userId = userId;
         this.username = username;
         this.email = email;
         this.roles = roles;
         this.success = success;
+        this.token = token;
     }
 
     // Getters and setters
@@ -75,5 +77,13 @@ public class LoginResponseDto {
 
     public void setSuccess(boolean success) {
         this.success = success;
+    }
+
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
     }
 }

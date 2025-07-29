@@ -12,6 +12,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.security.authentication.BadCredentialsException;
 
+import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -35,7 +36,14 @@ public class UserService {
         return userRepository.findByEmail(email);
     }
 
-    // Login method
+    // Simple token generation method (replace with your existing JWT implementation)
+    private String generateSimpleToken(String username, String email, Long userId, Set<String> roles) {
+        // This is a simple example - replace with your existing JWT token generation logic
+        String tokenData = userId + ":" + username + ":" + email + ":" + String.join(",", roles);
+        return Base64.getEncoder().encodeToString(tokenData.getBytes());
+    }
+
+    // Login method with token generation
     public LoginResponseDto login(LoginDTO loginDto) {
         try {
             // Find user by username
@@ -57,14 +65,23 @@ public class UserService {
                     .map(Enum::name)
                     .collect(Collectors.toSet());
 
-            // Return successful login response
+            // Generate token using your existing method
+            String token = generateSimpleToken(
+                    user.getUsername(),
+                    user.getEmail(),
+                    user.getId(),
+                    roleNames
+            );
+
+            // Return successful login response with token
             return new LoginResponseDto(
                     "Login successful",
                     user.getId(),
                     user.getUsername(),
                     user.getEmail(),
                     roleNames,
-                    true
+                    true,
+                    token
             );
 
         } catch (Exception e) {
@@ -72,8 +89,13 @@ public class UserService {
         }
     }
 
-    // Regular user registration
+    // Regular user registration with password confirmation
     public String createUser(UserRegistrationDto userRegistrationDto) {
+        // Check if passwords match
+        if (!userRegistrationDto.isPasswordMatching()) {
+            throw new RuntimeException("Passwords do not match");
+        }
+
         // Check if username already exists
         if (userRepository.existsByUsername(userRegistrationDto.getUsername())) {
             throw new RuntimeException("Username already exists");
@@ -98,8 +120,13 @@ public class UserService {
         return "User registered successfully";
     }
 
-    // Admin registration with extended fields
+    // Admin registration with extended fields and password confirmation
     public String createAdmin(AdminSignupDto adminSignupDto) {
+        // Check if passwords match
+        if (!adminSignupDto.isPasswordMatching()) {
+            throw new RuntimeException("Passwords do not match");
+        }
+
         // Check if username already exists
         if (userRepository.existsByUsername(adminSignupDto.getUsername())) {
             throw new RuntimeException("Username already exists");
