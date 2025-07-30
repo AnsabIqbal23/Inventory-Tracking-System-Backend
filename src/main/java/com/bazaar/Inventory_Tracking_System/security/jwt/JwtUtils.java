@@ -2,14 +2,15 @@ package com.bazaar.Inventory_Tracking_System.security.jwt;
 
 import java.security.Key;
 import java.util.Date;
+import java.util.Set;
 
+import com.bazaar.Inventory_Tracking_System.security.services.UserDetailsImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
-import com.fifth_semester.project.security.services.UserDetailsImpl;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -18,31 +19,40 @@ import io.jsonwebtoken.security.Keys;
 public class JwtUtils {
   private static final Logger logger = LoggerFactory.getLogger(JwtUtils.class);
 
-  @Value("${project.app.jwtSecret}")
+  @Value("${bazaar.app.jwtSecret:mySecretKey}")
   private String jwtSecret;
 
-  @Value("${project.app.jwtExpirationMs}")
+  @Value("${bazaar.app.jwtExpirationMs:86400000}")
   private int jwtExpirationMs;
 
-  public String generateJwtToken(Authentication authentication) {
-
-    UserDetailsImpl userPrincipal = (UserDetailsImpl) authentication.getPrincipal();
-
+  public String generateJwtToken(Long userId, String username, String email, Set<String> roles) {
     return Jwts.builder()
-        .setSubject((userPrincipal.getEmail()))
-        .setIssuedAt(new Date())
-        .setExpiration(new Date((new Date()).getTime() + jwtExpirationMs))
-        .signWith(key(), SignatureAlgorithm.HS256)
-        .compact();
+            .setSubject(username)
+            .claim("id", userId)
+            .claim("email", email)
+            .claim("roles", roles)
+            .setIssuedAt(new Date())
+            .setExpiration(new Date((new Date()).getTime() + jwtExpirationMs))
+            .signWith(key(), SignatureAlgorithm.HS256)
+            .compact();
   }
-  
+
+  public String generateTokenFromUsername(String username) {
+    return Jwts.builder()
+            .setSubject(username)
+            .setIssuedAt(new Date())
+            .setExpiration(new Date((new Date()).getTime() + jwtExpirationMs))
+            .signWith(key(), SignatureAlgorithm.HS256)
+            .compact();
+  }
+
   private Key key() {
     return Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtSecret));
   }
 
   public String getUserNameFromJwtToken(String token) {
     return Jwts.parser().setSigningKey(key()).build()
-               .parseClaimsJws(token).getBody().getSubject();
+            .parseClaimsJws(token).getBody().getSubject();
   }
 
   public boolean validateJwtToken(String authToken) {

@@ -18,26 +18,25 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import com.fifth_semester.project.security.services.UserDetailsServiceImpl;
+import com.bazaar.Inventory_Tracking_System.service.CustomUserDetailsService;
 
 public class AuthTokenFilter extends OncePerRequestFilter {
   @Autowired
   private JwtUtils jwtUtils;
 
   @Autowired
-  private UserDetailsServiceImpl userDetailsService;
+  private CustomUserDetailsService userDetailsService;
 
   private static final Logger logger = LoggerFactory.getLogger(AuthTokenFilter.class);
 
   @Override
   protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
-      throws ServletException, IOException {
-    System.out.println("Incoming Request: " + request.getMethod() + " " + request.getRequestURI());
-    System.out.println("Headers: " + Collections.list(request.getHeaderNames()));
-    System.out.println("Content-Type: " + request.getContentType());
+          throws ServletException, IOException {
+    logger.debug("Incoming Request: " + request.getMethod() + " " + request.getRequestURI());
+
     try {
       String headerAuth = request.getHeader("Authorization");
-      logger.debug("Authorization header: " + headerAuth);  // Add this line for debugging
+      logger.debug("Authorization header: " + headerAuth);
 
       String jwt = parseJwt(request);
       if (jwt != null && jwtUtils.validateJwtToken(jwt)) {
@@ -45,26 +44,29 @@ public class AuthTokenFilter extends OncePerRequestFilter {
 
         UserDetails userDetails = userDetailsService.loadUserByUsername(username);
         UsernamePasswordAuthenticationToken authentication =
-            new UsernamePasswordAuthenticationToken(
-                userDetails,
-                null,
-                userDetails.getAuthorities());
+                new UsernamePasswordAuthenticationToken(
+                        userDetails,
+                        null,
+                        userDetails.getAuthorities());
         authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
       }
     } catch (Exception e) {
-      logger.error("Cannot set user authentication: {}", e);
+      logger.error("Cannot set user authentication: {}", e.getMessage());
     }
 
     filterChain.doFilter(request, response);
   }
 
-//  @Override
-//  protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
-//    String path = request.getRequestURI();
-//    return path.startsWith("/api/auth") || path.startsWith("/docs") || path.startsWith("/swagger-ui");
-//  }
+  @Override
+  protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+    String path = request.getRequestURI();
+    return path.startsWith("/api/users/login") ||
+            path.startsWith("/api/users/register") ||
+            path.startsWith("/api/users/admin/login") ||
+            path.startsWith("/api/users/admin/register");
+  }
 
   private String parseJwt(HttpServletRequest request) {
     String headerAuth = request.getHeader("Authorization");

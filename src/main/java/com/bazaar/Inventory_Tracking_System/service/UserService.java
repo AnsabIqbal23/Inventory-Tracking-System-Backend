@@ -7,6 +7,7 @@ import com.bazaar.Inventory_Tracking_System.dto.UserRegistrationDto;
 import com.bazaar.Inventory_Tracking_System.entity.User;
 import com.bazaar.Inventory_Tracking_System.entity.Role;
 import com.bazaar.Inventory_Tracking_System.repository.UserRepository;
+import com.bazaar.Inventory_Tracking_System.security.jwt.JwtUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -28,19 +29,15 @@ public class UserService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private JwtUtils jwtUtils;
+
     public Optional<User> findByUsername(String username) {
         return userRepository.findByUsername(username);
     }
 
     public Optional<User> findByEmail(String email) {
         return userRepository.findByEmail(email);
-    }
-
-    // Simple token generation method (replace with your existing JWT implementation)
-    private String generateSimpleToken(String username, String email, Long userId, Set<String> roles) {
-        // This is a simple example - replace with your existing JWT token generation logic
-        String tokenData = userId + ":" + username + ":" + email + ":" + String.join(",", roles);
-        return Base64.getEncoder().encodeToString(tokenData.getBytes());
     }
 
     // Login method with token generation
@@ -66,10 +63,10 @@ public class UserService {
                     .collect(Collectors.toSet());
 
             // Generate token using your existing method
-            String token = generateSimpleToken(
+            String token = jwtUtils.generateJwtToken(
+                    user.getId(),
                     user.getUsername(),
                     user.getEmail(),
-                    user.getId(),
                     roleNames
             );
 
@@ -135,6 +132,11 @@ public class UserService {
         // Check if email already exists
         if (userRepository.existsByEmail(adminSignupDto.getEmail())) {
             throw new RuntimeException("Email already exists");
+        }
+
+        // Check if phone already exists
+        if (userRepository.existsByPhone(adminSignupDto.getPhone())) {
+            throw new RuntimeException("Phone No. already exists");
         }
 
         User user = new User();

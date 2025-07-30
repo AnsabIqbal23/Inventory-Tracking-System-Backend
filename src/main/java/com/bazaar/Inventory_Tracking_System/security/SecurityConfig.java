@@ -1,6 +1,8 @@
 package com.bazaar.Inventory_Tracking_System.security;
 
 import com.bazaar.Inventory_Tracking_System.config.RateLimitingFilter;
+import com.bazaar.Inventory_Tracking_System.security.jwt.AuthEntryPointJwt;
+import com.bazaar.Inventory_Tracking_System.security.jwt.AuthTokenFilter;
 import com.bazaar.Inventory_Tracking_System.service.CustomUserDetailsService;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +15,7 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -27,14 +30,21 @@ public class SecurityConfig {
     private CustomUserDetailsService userDetailsService;
 
     @Autowired
+    private AuthEntryPointJwt unauthorizedHandler;
+
+    @Autowired
     private RateLimitingFilter rateLimitingFilter;
+
+    @Bean
+    public AuthTokenFilter authenticationJwtTokenFilter() {
+        return new AuthTokenFilter();
+    }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    // Expose AuthenticationManager
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
@@ -52,11 +62,10 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
-                .httpBasic(httpBasic -> httpBasic
-                        .authenticationEntryPoint((request, response, authException) ->
-                                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized"))
-                )
-                .addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(unauthorizedHandler))
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authz -> authz
                         // Allow login and signup endpoints without authentication
                         .requestMatchers("/api/users/login").permitAll()
@@ -71,6 +80,8 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(daoAuthenticationProvider())
+                .addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
 }

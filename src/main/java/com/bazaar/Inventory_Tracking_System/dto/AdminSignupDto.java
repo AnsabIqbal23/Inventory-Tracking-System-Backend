@@ -17,14 +17,19 @@ public class AdminSignupDto {
     @NotBlank(message = "Confirm password is required")
     private String confirmPassword;
 
+    @NotBlank(message = "Phone No. is required")
     private String phone;
 
+    @NotBlank(message = "Location is required")
     private String location;
 
+    @NotBlank(message = "City is required")
     private String city;
 
+    @NotBlank(message = "State is required")
     private String state;
 
+    @NotBlank(message = "Country is required")
     private String country;
 
     // Constructors
