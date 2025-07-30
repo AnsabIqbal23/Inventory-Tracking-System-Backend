@@ -1,5 +1,6 @@
-package com.bazaar.Inventory_Tracking_System.config;
+package com.bazaar.Inventory_Tracking_System.security;
 
+import com.bazaar.Inventory_Tracking_System.config.RateLimitingFilter;
 import com.bazaar.Inventory_Tracking_System.service.CustomUserDetailsService;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
