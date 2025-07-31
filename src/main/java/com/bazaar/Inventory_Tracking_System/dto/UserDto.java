@@ -11,16 +11,18 @@ public class UserDto {
     private String city;
     private String state;
     private String country;
+    private String status;
     private Set<String> roles;
 
     // Constructors
     public UserDto() {
     }
 
-    public UserDto(Long id, String username, String email, Set<String> roles) {
+    public UserDto(Long id, String username, String email, String status, Set<String> roles) {
         this.id = id;
         this.username = username;
         this.email = email;
+        this.status = status;
         this.roles = roles;
     }
 
@@ -87,6 +89,14 @@ public class UserDto {
 
     public void setCountry(String country) {
         this.country = country;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 
     public Set<String> getRoles() {

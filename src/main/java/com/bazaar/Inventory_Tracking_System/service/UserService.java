@@ -87,7 +87,7 @@ public class UserService {
         }
     }
 
-    // Regular user registration with password confirmation
+    // Regular user registration with password confirmation and extended fields
     public String createUser(UserRegistrationDto userRegistrationDto) {
         // Check if passwords match
         if (!userRegistrationDto.isPasswordMatching()) {
@@ -104,10 +104,21 @@ public class UserService {
             throw new RuntimeException("Email already exists");
         }
 
+        // Check if phone already exists
+        if (userRepository.existsByPhone(userRegistrationDto.getPhone())) {
+            throw new RuntimeException("Phone No. already exists");
+        }
+
         User user = new User();
         user.setUsername(userRegistrationDto.getUsername());
         user.setEmail(userRegistrationDto.getEmail());
         user.setPassword(passwordEncoder.encode(userRegistrationDto.getPassword()));
+        user.setPhone(userRegistrationDto.getPhone());
+        user.setLocation(userRegistrationDto.getLocation());
+        user.setCity(userRegistrationDto.getCity());
+        user.setState(userRegistrationDto.getState());
+        user.setCountry(userRegistrationDto.getCountry());
+        user.setStatus("ACTIVE"); // Set default status
 
         // Set default role as USER
         Set<Role> roles = new HashSet<>();
@@ -149,6 +160,7 @@ public class UserService {
         user.setCity(adminSignupDto.getCity());
         user.setState(adminSignupDto.getState());
         user.setCountry(adminSignupDto.getCountry());
+        user.setStatus("ACTIVE"); // Set default status
 
         // Set role as ADMIN
         Set<Role> roles = new HashSet<>();
@@ -165,6 +177,7 @@ public class UserService {
         user.setUsername(username);
         user.setPassword(passwordEncoder.encode(password));
         user.setRoles(roles);
+        user.setStatus("ACTIVE"); // Set default status
         userRepository.save(user);
     }
 
@@ -204,6 +217,36 @@ public class UserService {
 
         // Update and save new password
         user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+    }
+
+    // Admin update user status
+    public void adminUpdateUserStatus(Long userId, String status) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+
+        // Validate status (you can add more validation here if needed)
+        if (status == null || status.trim().isEmpty()) {
+            throw new RuntimeException("Status cannot be empty");
+        }
+
+        // Update and save new status
+        user.setStatus(status.trim().toUpperCase());
+        userRepository.save(user);
+    }
+
+    // Admin update user status by username
+    public void adminUpdateUserStatusByUsername(String username, String status) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found with username: " + username));
+
+        // Validate status
+        if (status == null || status.trim().isEmpty()) {
+            throw new RuntimeException("Status cannot be empty");
+        }
+
+        // Update and save new status
+        user.setStatus(status.trim().toUpperCase());
         userRepository.save(user);
     }
 }

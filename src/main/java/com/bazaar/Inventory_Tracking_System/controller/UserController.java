@@ -65,7 +65,7 @@ public class UserController {
 
     // =================== SIGNUP ENDPOINTS (NO AUTH REQUIRED) ===================
 
-    // User registration (no auth required)
+    // User registration (no auth required) - now with extended fields
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@Valid @RequestBody UserRegistrationDto userRegistrationDto) {
         try {
@@ -99,7 +99,7 @@ public class UserController {
                 .collect(Collectors.toList());
     }
 
-    // Get User By ID (admin only)
+    // Get User By ID (admin only) - now includes status
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> getUserById(@PathVariable Long id) {
@@ -170,7 +170,7 @@ public class UserController {
         }
     }
 
-    // Helper method to convert User entity to UserDto
+    // Helper method to convert User entity to UserDto - now includes status
     private UserDto convertToDto(User user) {
         UserDto dto = new UserDto();
         dto.setId(user.getId());
@@ -181,6 +181,7 @@ public class UserController {
         dto.setCity(user.getCity());
         dto.setState(user.getState());
         dto.setCountry(user.getCountry());
+        dto.setStatus(user.getStatus()); // Added status field
 
         // Convert Role enum set to String set
         Set<String> roleNames = user.getRoles().stream()

@@ -36,6 +36,9 @@ public class User {
     @Column(nullable = true)
     private String country;
 
+    @Column(nullable = false)
+    private String status = "ACTIVE";
+
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
     @Enumerated(EnumType.STRING)
@@ -50,6 +53,7 @@ public class User {
         this.email = email;
         this.password = password;
         this.roles = roles;
+        this.status = "ACTIVE"; // Default status
     }
 
     // Getters and setters
@@ -123,6 +127,14 @@ public class User {
 
     public void setCountry(String country) {
         this.country = country;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 
     public Set<Role> getRoles() {
