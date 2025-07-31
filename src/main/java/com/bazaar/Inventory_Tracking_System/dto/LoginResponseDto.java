@@ -7,6 +7,7 @@ public class LoginResponseDto {
     private Long userId;
     private String username;
     private String email;
+    private String phone;
     private Set<String> roles;
     private boolean success;
     private String token;
@@ -20,11 +21,12 @@ public class LoginResponseDto {
         this.success = success;
     }
 
-    public LoginResponseDto(String message, Long userId, String username, String email, Set<String> roles, boolean success, String token) {
+    public LoginResponseDto(String message, Long userId, String username, String email, String phone, Set<String> roles, boolean success, String token) {
         this.message = message;
         this.userId = userId;
         this.username = username;
         this.email = email;
+        this.phone = phone;
         this.roles = roles;
         this.success = success;
         this.token = token;
@@ -85,5 +87,13 @@ public class LoginResponseDto {
 
     public void setToken(String token) {
         this.token = token;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
     }
 }

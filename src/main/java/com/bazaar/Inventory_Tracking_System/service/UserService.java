@@ -76,6 +76,7 @@ public class UserService {
                     user.getId(),
                     user.getUsername(),
                     user.getEmail(),
+                    user.getPhone(),
                     roleNames,
                     true,
                     token

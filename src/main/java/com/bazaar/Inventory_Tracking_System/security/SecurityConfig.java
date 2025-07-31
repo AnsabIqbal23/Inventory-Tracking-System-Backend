@@ -62,11 +62,14 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
+                .cors(cors -> cors.configure(http)) // Ensure CORS is properly configured
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(unauthorizedHandler))
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authz -> authz
+                        // Allow OPTIONS requests for CORS preflight
+                        .requestMatchers("OPTIONS", "/**").permitAll()
                         // Allow login and signup endpoints without authentication
                         .requestMatchers("/api/users/login").permitAll()
                         .requestMatchers("/api/users/admin/login").permitAll()
@@ -81,7 +84,8 @@ public class SecurityConfig {
                 )
                 .authenticationProvider(daoAuthenticationProvider())
                 .addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
+                // Add rate limiting filter AFTER JWT filter to avoid interfering with CORS
+                .addFilterAfter(rateLimitingFilter, AuthTokenFilter.class)
                 .build();
     }
 }
