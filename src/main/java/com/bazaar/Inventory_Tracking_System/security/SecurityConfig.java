@@ -73,8 +73,7 @@ public class SecurityConfig {
                         // Allow login and signup endpoints without authentication
                         .requestMatchers("/api/users/login").permitAll()
                         .requestMatchers("/api/users/admin/login").permitAll()
-                        .requestMatchers("/api/users/register").permitAll()
-                        .requestMatchers("/api/users/admin/register").permitAll()
+                        .requestMatchers("/api/users/forget-password/**").permitAll()
                         // Protect other endpoints
                         .requestMatchers("/api/products/**").authenticated()
                         .requestMatchers("/api/stores/**").authenticated()

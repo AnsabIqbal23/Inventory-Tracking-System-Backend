@@ -63,9 +63,8 @@ public class AuthTokenFilter extends OncePerRequestFilter {
   protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
     String path = request.getRequestURI();
     return path.startsWith("/api/users/login") ||
-            path.startsWith("/api/users/register") ||
             path.startsWith("/api/users/admin/login") ||
-            path.startsWith("/api/users/admin/register");
+            path.startsWith("/api/users/forget-password/");
   }
 
   private String parseJwt(HttpServletRequest request) {

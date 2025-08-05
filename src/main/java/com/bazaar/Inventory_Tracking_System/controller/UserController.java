@@ -3,6 +3,7 @@ package com.bazaar.Inventory_Tracking_System.controller;
 import com.bazaar.Inventory_Tracking_System.dto.*;
 import com.bazaar.Inventory_Tracking_System.entity.User;
 import com.bazaar.Inventory_Tracking_System.service.UserService;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -63,10 +64,8 @@ public class UserController {
         }
     }
 
-    // =================== SIGNUP ENDPOINTS (NO AUTH REQUIRED) ===================
-
-    // User registration (no auth required) - now with extended fields
     @PostMapping("/register")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> registerUser(@Valid @RequestBody UserRegistrationDto userRegistrationDto) {
         try {
             String message = userService.createUser(userRegistrationDto);
@@ -76,8 +75,8 @@ public class UserController {
         }
     }
 
-    // Admin registration with extended fields (no auth required)
     @PostMapping("/admin/register")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> registerAdmin(@Valid @RequestBody AdminSignupDto adminSignupDto) {
         try {
             String message = userService.createAdmin(adminSignupDto);
@@ -86,8 +85,6 @@ public class UserController {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage(), "success", false));
         }
     }
-
-    // =================== AUTHENTICATED ENDPOINTS ===================
 
     // Get All Users (admin only)
     @GetMapping
@@ -121,12 +118,15 @@ public class UserController {
         return ResponseEntity.ok(Map.of("message", "User deleted successfully"));
     }
 
-    // Current user update their own password
     @PutMapping("/password")
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<?> updatePassword(@Valid @RequestBody PasswordUpdateDto passwordUpdateDto) {
         try {
-            // Get the current authenticated user
+            // Validate newPassword == confirmPassword
+            if (!passwordUpdateDto.getNewPassword().equals(passwordUpdateDto.getConfirmPassword())) {
+                return ResponseEntity.badRequest().body(Map.of("message", "New password and confirm password do not match"));
+            }
+
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             String currentUsername = authentication.getName();
 
@@ -144,23 +144,28 @@ public class UserController {
         }
     }
 
-    // Admin update any user's password by username
-    @PutMapping("/admin/password/{username}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> adminUpdateUserPassword(
+    @PutMapping("/forget-password/{username}")
+    public ResponseEntity<?> forgetPassword(
             @PathVariable String username,
             @RequestBody Map<String, String> payload) {
 
         String newPassword = payload.get("password");
-        if (newPassword == null || newPassword.isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("message", "New password is required"));
+        String confirmPassword = payload.get("confirmPassword");
+
+        if (newPassword == null || confirmPassword == null ||
+                newPassword.isEmpty() || confirmPassword.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Password and confirm password are required"));
+        }
+
+        if (!newPassword.equals(confirmPassword)) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Password and confirm password do not match"));
         }
 
         try {
-            // Find the user first
             Optional<User> userOptional = userService.findByUsername(username);
             if (userOptional.isEmpty()) {
-                return ResponseEntity.notFound().build();
+                return ResponseEntity.status(HttpServletResponse.SC_NOT_FOUND)
+                        .body(Map.of("message", "User not found"));
             }
 
             userService.adminUpdateUserPassword(userOptional.get().getId(), newPassword);
@@ -169,6 +174,7 @@ public class UserController {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
     }
+
 
     // Helper method to convert User entity to UserDto - now includes status
     private UserDto convertToDto(User user) {

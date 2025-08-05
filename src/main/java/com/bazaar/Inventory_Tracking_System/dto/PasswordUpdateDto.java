@@ -12,12 +12,17 @@ public class PasswordUpdateDto {
     @JsonProperty("newpassword")  // Match the case in your JSON
     private String newPassword;
 
+    @NotBlank(message = "Confirm password is required")
+    @JsonProperty("confirmpassword")  // Match the case in your JSON
+    private String confirmPassword;
+
     public PasswordUpdateDto() {
     }
 
-    public PasswordUpdateDto(String currentPassword, String newPassword) {
+    public PasswordUpdateDto(String currentPassword, String newPassword, String confirmPassword) {
         this.currentPassword = currentPassword;
         this.newPassword = newPassword;
+        this.confirmPassword = confirmPassword;
     }
 
     public String getCurrentPassword() {
@@ -34,5 +39,13 @@ public class PasswordUpdateDto {
 
     public void setNewPassword(String newPassword) {
         this.newPassword = newPassword;
+    }
+
+    public String getConfirmPassword() {
+        return confirmPassword;
+    }
+
+    public void setConfirmPassword(String confirmPassword) {
+        this.confirmPassword = confirmPassword;
     }
 }
